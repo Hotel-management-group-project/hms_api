@@ -3,6 +3,8 @@
 // Module: Advanced Software Development (UFCF8S-30-2)
 
 using HMS.API.Data;
+using HMS.API.Hubs;
+using HMS.API.Middleware;
 using HMS.API.Models;
 using HMS.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -75,6 +77,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddSignalR();
 
 // Resend email
 builder.Services.AddOptions();
@@ -96,6 +99,7 @@ builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ICheckInService, CheckInService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IOccupancyBroadcaster, OccupancyBroadcaster>();
 
 var app = builder.Build();
 
@@ -116,9 +120,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<AuditLoggingMiddleware>();
 app.MapControllers();
+app.MapHub<OccupancyHub>("/hubs/occupancy");
 
 app.Run();

@@ -15,6 +15,7 @@ namespace HMS.API.Services
         private readonly IBookingService _bookingService;
         private readonly IEmailService _emailService;
         private readonly IPdfService _pdfService;
+        private readonly IOccupancyBroadcaster _broadcaster;
         private readonly ILogger<CheckInService> _logger;
 
         public CheckInService(
@@ -22,12 +23,14 @@ namespace HMS.API.Services
             IBookingService bookingService,
             IEmailService emailService,
             IPdfService pdfService,
+            IOccupancyBroadcaster broadcaster,
             ILogger<CheckInService> logger)
         {
             _db = db;
             _bookingService = bookingService;
             _emailService = emailService;
             _pdfService = pdfService;
+            _broadcaster = broadcaster;
             _logger = logger;
         }
 
@@ -77,6 +80,7 @@ namespace HMS.API.Services
             });
 
             await _db.SaveChangesAsync();
+            await _broadcaster.BroadcastAsync(booking.HotelId);
 
             return (await _bookingService.GetByIdAsync(bookingId, string.Empty, isStaff: true))!;
         }
@@ -115,6 +119,7 @@ namespace HMS.API.Services
             });
 
             await _db.SaveChangesAsync();
+            await _broadcaster.BroadcastAsync(booking.HotelId);
 
             // Load full booking for PDF + email
             var fullBooking = (await _bookingService.GetByIdAsync(bookingId, string.Empty, isStaff: true))!;
