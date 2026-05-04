@@ -138,7 +138,7 @@ namespace HMS.API.Services
                 CheckInDate = dto.CheckInDate,
                 CheckOutDate = dto.CheckOutDate,
                 TotalPrice = totalPrice,
-                Status = BookingStatus.Confirmed,
+                Status = BookingStatus.Pending,
                 CancellationFee = 0,
                 QrCodeUrl = qrCodeUrl,
                 CreatedAt = DateTime.UtcNow,
@@ -350,13 +350,15 @@ namespace HMS.API.Services
                 RoomId = br.RoomId,
                 RoomNumber = br.Room.RoomNumber,
                 RoomType = br.Room.Type.ToString(),
-                Floor = br.Room.Floor
+                Floor = br.Room.Floor,
+                PricePerNight = IsPeakMonth(b.CheckInDate.Month) ? br.Room.PricePeak : br.Room.PriceOffPeak
             }).ToList(),
             AncillaryServices = b.BookingAncillaryServices.Select(bas => new BookingServiceDto
             {
                 ServiceId = bas.AncillaryServiceId,
                 ServiceName = bas.AncillaryService.Name,
                 Quantity = bas.Quantity,
+                UnitPrice = bas.AncillaryService.Price,
                 TotalPrice = bas.TotalPrice
             }).ToList(),
             CreatedAt = b.CreatedAt,

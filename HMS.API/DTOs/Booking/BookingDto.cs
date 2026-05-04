@@ -32,6 +32,7 @@ namespace HMS.API.DTOs.Booking
         public string RoomNumber { get; set; } = string.Empty;
         public string RoomType { get; set; } = string.Empty;
         public int Floor { get; set; }
+        public decimal PricePerNight { get; set; }
     }
 
     public class BookingServiceDto
@@ -39,6 +40,7 @@ namespace HMS.API.DTOs.Booking
         public int ServiceId { get; set; }
         public string ServiceName { get; set; } = string.Empty;
         public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
         public decimal TotalPrice { get; set; }
     }
 }
