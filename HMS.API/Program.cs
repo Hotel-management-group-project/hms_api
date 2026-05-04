@@ -3,6 +3,7 @@
 // Module: Advanced Software Development (UFCF8S-30-2)
 
 using HMS.API.Data;
+using HMS.API.Data.Seeders;
 using HMS.API.Hubs;
 using HMS.API.Middleware;
 using HMS.API.Models;
@@ -108,15 +109,29 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// Seed roles
+// Migrate + seed
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var sp = scope.ServiceProvider;
+    var db = sp.GetRequiredService<ApplicationDbContext>();
+    var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = sp.GetRequiredService<UserManager<User>>();
+
+    await db.Database.MigrateAsync();
+
+    // Roles
     foreach (var role in new[] { "Guest", "FrontDesk", "Manager", "Admin" })
     {
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));
     }
+
+    // Data seeders — each is idempotent (skips if table already has rows)
+    await HotelSeeder.SeedAsync(db);
+    await RoomSeeder.SeedAsync(db);
+    await AncillaryServiceSeeder.SeedAsync(db);
+    await UserSeeder.SeedAsync(userManager, roleManager);
+    await BookingSeeder.SeedAsync(db);
 }
 
 app.UseHttpsRedirection();
