@@ -3,12 +3,12 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Restore dependencies first (cached layer unless .csproj changes)
-COPY HMS.API.csproj .
-RUN dotnet restore HMS.API.csproj
+COPY HMS.API/HMS.API.csproj HMS.API/
+RUN dotnet restore HMS.API/HMS.API.csproj
 
 # Copy the rest of the source and publish
-COPY . .
-RUN dotnet publish HMS.API.csproj \
+COPY HMS.API/ HMS.API/
+RUN dotnet publish HMS.API/HMS.API.csproj \
     --configuration Release \
     --no-restore \
     --output /app/publish
