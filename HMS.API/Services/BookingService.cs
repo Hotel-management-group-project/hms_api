@@ -13,11 +13,19 @@ namespace HMS.API.Services
     {
         private readonly ApplicationDbContext _db;
         private readonly IQRCodeService _qrCodeService;
+        private readonly IEmailService _emailService;
+        private readonly ILogger<BookingService> _logger;
 
-        public BookingService(ApplicationDbContext db, IQRCodeService qrCodeService)
+        public BookingService(
+            ApplicationDbContext db,
+            IQRCodeService qrCodeService,
+            IEmailService emailService,
+            ILogger<BookingService> logger)
         {
             _db = db;
             _qrCodeService = qrCodeService;
+            _emailService = emailService;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<BookingListDto>> GetAllAsync(string userId, bool isStaff)
@@ -248,6 +256,24 @@ namespace HMS.API.Services
             });
 
             await _db.SaveChangesAsync();
+
+            try
+            {
+                await _emailService.SendCancellationEmailAsync(
+                    booking.Guest.Email!,
+                    $"{booking.Guest.FirstName} {booking.Guest.LastName}",
+                    booking.ReferenceNumber,
+                    booking.Hotel?.Name ?? "Hotel",
+                    booking.CheckInDate,
+                    booking.CheckOutDate,
+                    cancellationFee);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Cancellation email failed for booking {Reference}", booking.ReferenceNumber);
+            }
+
             return ToDto(booking);
         }
 

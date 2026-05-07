@@ -14,5 +14,17 @@ namespace HMS.API.Services
         Task SendInvoiceAsync(
             string toEmail, string guestName, string referenceNumber,
             string hotelName, byte[] pdfBytes);
+
+        Task SendCancellationEmailAsync(
+            string toEmail, string guestName, string referenceNumber,
+            string hotelName, DateTime checkIn, DateTime checkOut,
+            decimal cancellationFee);
+
+        Task SendCheckInConfirmationEmailAsync(
+            string toEmail, string guestName, string referenceNumber,
+            string hotelName, DateTime checkOut);
+
+        Task SendPasswordChangeReminderEmailAsync(
+            string toEmail, string fullName);
     }
 }

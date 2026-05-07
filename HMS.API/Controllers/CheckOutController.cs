@@ -11,7 +11,7 @@ namespace HMS.API.Controllers
 {
     [ApiController]
     [Route("api/checkout")]
-    [Authorize(Roles = "FrontDesk,Admin")]
+    [Authorize(Roles = "FrontDesk,Manager,Admin")]
     public class CheckOutController : ControllerBase
     {
         private readonly ICheckInService _checkInService;

@@ -17,10 +17,12 @@ namespace HMS.API.Controllers
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
+        private readonly IPdfService _pdfService;
 
-        public BookingController(IBookingService bookingService)
+        public BookingController(IBookingService bookingService, IPdfService pdfService)
         {
             _bookingService = bookingService;
+            _pdfService = pdfService;
         }
 
         /// <summary>
@@ -62,6 +64,27 @@ namespace HMS.API.Controllers
                 return NotFound(new { message = "QR code not available for this booking." });
 
             return Ok(new { qrCodeUrl = booking.QrCodeUrl, referenceNumber = booking.ReferenceNumber });
+        }
+
+        /// <summary>
+        /// GET /api/bookings/{id}/invoice
+        /// Returns the PDF invoice for a completed or checked-out booking.
+        /// Guest may only download their own invoice; staff may download any.
+        /// </summary>
+        [HttpGet("{id:int}/invoice")]
+        public async Task<IActionResult> GetInvoice(int id)
+        {
+            var booking = await _bookingService.GetByIdAsync(id, GetUserId(), IsStaff());
+            if (booking == null)
+                return NotFound(new { message = $"Booking {id} not found." });
+
+            var allowedStatuses = new[] { "CheckedOut", "CheckedIn", "Confirmed" };
+            if (!allowedStatuses.Contains(booking.Status))
+                return BadRequest(new { message = $"Invoice is only available for Confirmed, CheckedIn or CheckedOut bookings. Current status: {booking.Status}." });
+
+            var pdfBytes = _pdfService.GenerateInvoice(booking);
+            var fileName = $"Invoice-{booking.ReferenceNumber}.pdf";
+            return File(pdfBytes, "application/pdf", fileName);
         }
 
         /// <summary>

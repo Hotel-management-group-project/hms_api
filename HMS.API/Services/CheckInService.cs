@@ -47,6 +47,8 @@ namespace HMS.API.Services
         public async Task<BookingDto> CheckInAsync(int bookingId, string staffUserId)
         {
             var booking = await _db.Bookings
+                .Include(b => b.Guest)
+                .Include(b => b.Hotel)
                 .Include(b => b.BookingRooms)
                 .FirstOrDefaultAsync(b => b.Id == bookingId)
                 ?? throw new KeyNotFoundException($"Booking {bookingId} not found.");
@@ -82,7 +84,24 @@ namespace HMS.API.Services
             await _db.SaveChangesAsync();
             await _broadcaster.BroadcastAsync(booking.HotelId);
 
-            return (await _bookingService.GetByIdAsync(bookingId, string.Empty, isStaff: true))!;
+            var fullBooking = (await _bookingService.GetByIdAsync(bookingId, string.Empty, isStaff: true))!;
+
+            try
+            {
+                await _emailService.SendCheckInConfirmationEmailAsync(
+                    booking.Guest.Email!,
+                    $"{booking.Guest.FirstName} {booking.Guest.LastName}",
+                    booking.ReferenceNumber,
+                    booking.Hotel?.Name ?? "Hotel",
+                    booking.CheckOutDate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Check-in confirmation email failed for booking {Reference}", booking.ReferenceNumber);
+            }
+
+            return fullBooking;
         }
 
         public async Task<BookingDto> CheckOutAsync(int bookingId, string staffUserId)

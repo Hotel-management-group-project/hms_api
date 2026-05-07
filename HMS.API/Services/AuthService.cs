@@ -18,6 +18,8 @@ namespace HMS.API.Services
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly ApplicationDbContext _db;
+        private readonly IEmailService _emailService;
+        private readonly ILogger<AuthService> _logger;
         private readonly string _jwtSecret;
         private readonly string _jwtIssuer;
         private readonly string _jwtAudience;
@@ -28,11 +30,15 @@ namespace HMS.API.Services
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             ApplicationDbContext db,
+            IEmailService emailService,
+            ILogger<AuthService> logger,
             IConfiguration config)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _db = db;
+            _emailService = emailService;
+            _logger = logger;
             _jwtSecret = config["JwtSettings:Secret"]!;
             _jwtIssuer = config["JwtSettings:Issuer"]!;
             _jwtAudience = config["JwtSettings:Audience"]!;
@@ -105,6 +111,20 @@ namespace HMS.API.Services
             var (accessToken, refreshToken) = await GenerateAndStoreTokensAsync(user);
 
             await LogAuditAsync(user.Id, "Login.Success", "User", user.Id, ipAddress, $"Login: {user.Email}");
+
+            if (requiresPasswordChange)
+            {
+                try
+                {
+                    await _emailService.SendPasswordChangeReminderEmailAsync(
+                        user.Email!,
+                        $"{user.FirstName} {user.LastName}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Password change reminder email failed for user {Email}", user.Email);
+                }
+            }
 
             return (BuildResponse(user, accessToken, requiresPasswordChange), refreshToken);
         }

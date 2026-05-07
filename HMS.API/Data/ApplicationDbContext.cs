@@ -10,7 +10,14 @@ namespace HMS.API.Data
 {
     public class ApplicationDbContext : IdentityDbContext<User>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+        private readonly string? _encryptionKey;
+
+        public ApplicationDbContext(
+            DbContextOptions<ApplicationDbContext> options,
+            IConfiguration config) : base(options)
+        {
+            _encryptionKey = config["DataProtection:EncryptionKey"];
+        }
 
         public DbSet<Hotel> Hotels => Set<Hotel>();
         public DbSet<Room> Rooms => Set<Room>();
@@ -25,6 +32,20 @@ namespace HMS.API.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            // Encrypt sensitive fields at rest when a key is configured
+            if (!string.IsNullOrEmpty(_encryptionKey))
+            {
+                var converter = new EncryptedStringConverter(_encryptionKey);
+
+                builder.Entity<User>()
+                    .Property(u => u.PhoneNumber)
+                    .HasConversion(converter);
+
+                builder.Entity<Payment>()
+                    .Property(p => p.TransactionReference)
+                    .HasConversion(converter);
+            }
 
             builder.Entity<Hotel>(e =>
             {
