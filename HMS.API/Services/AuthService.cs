@@ -279,12 +279,15 @@ namespace HMS.API.Services
         private static AuthResponseDto BuildResponse(User user, string accessToken, bool requiresPasswordChange) =>
             new()
             {
-                AccessToken = accessToken,
-                Role = user.Role,
-                UserId = user.Id,
-                Email = user.Email!,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
+                Token = accessToken,
+                User = new AuthUserDto
+                {
+                    Id = user.Id,
+                    Email = user.Email!,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Role = user.Role
+                },
                 RequiresPasswordChange = requiresPasswordChange
             };
 
