@@ -128,7 +128,7 @@ namespace HMS.API.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,  // cross-origin: Vercel → Render
                 Expires = DateTimeOffset.UtcNow.AddDays(_refreshTokenExpiryDays)
             });
         }
