@@ -35,7 +35,8 @@ namespace HMS.API.Data.Seeders
                     Role = role,
                     IsActive = true,
                     EmailConfirmed = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    LastPasswordChange = DateTime.UtcNow
                 };
 
                 var result = await userManager.CreateAsync(user, password);
