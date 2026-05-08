@@ -30,7 +30,7 @@ namespace HMS.API.Controllers
         {
             var guestId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-            if (!Enum.TryParse<RoomType>(dto.RoomType, out var roomType))
+            if (!Enum.TryParse<RoomType>(dto.RoomType.Replace(" ", ""), out var roomType))
                 return BadRequest(new { message = $"Invalid room type '{dto.RoomType}'." });
 
             if (dto.CheckInDate.Date <= DateTime.UtcNow.Date)
