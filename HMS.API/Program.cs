@@ -70,7 +70,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
             builder.Configuration["FrontendUrl"] ?? "http://localhost:4200",
-            "https://hms.vercel.app"
+            "https://hms.vercel.app",
+            "https://hms-ui-sage.vercel.app"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
