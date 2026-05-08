@@ -138,9 +138,9 @@ using (var scope = app.Services.CreateScope())
     await BookingSeeder.SeedAsync(db);
 }
 
+app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseMiddleware<SecurityHeadersMiddleware>();
-app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<AuditLoggingMiddleware>();
