@@ -20,7 +20,7 @@ namespace HMS.API.DTOs.Room
         public decimal TotalPrice { get; set; }
         public int Nights { get; set; }
         public string? Description { get; set; }
-        public string? ImageUrls { get; set; }
+        public List<string> ImageUrls { get; set; } = [];
         public int Floor { get; set; }
     }
 }

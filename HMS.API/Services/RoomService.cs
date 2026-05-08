@@ -143,7 +143,7 @@ namespace HMS.API.Services
         }
 
         public async Task<IEnumerable<RoomAvailabilityDto>> GetAvailableAsync(
-            int hotelId, DateTime checkIn, DateTime checkOut, int? capacity, string? type)
+            int? hotelId, DateTime checkIn, DateTime checkOut, int? capacity, string? type)
         {
             RoomType? roomType = null;
             if (!string.IsNullOrWhiteSpace(type))
@@ -156,7 +156,7 @@ namespace HMS.API.Services
             var rooms = await _db.Rooms
                 .Include(r => r.Hotel)
                 .Include(r => r.BookingRooms).ThenInclude(br => br.Booking)
-                .Where(r => r.HotelId == hotelId)
+                .Where(r => hotelId == null || r.HotelId == hotelId)
                 .Where(r => r.Status != RoomStatus.OutOfService)
                 .Where(r => !r.BookingRooms.Any(br =>
                     (br.Booking.Status == BookingStatus.Confirmed || br.Booking.Status == BookingStatus.CheckedIn) &&
@@ -206,7 +206,7 @@ namespace HMS.API.Services
             CurrentPricePerNight = GetNightlyRate(room, referenceDate),
             Status = room.Status.ToString(),
             Description = room.Description,
-            ImageUrls = room.ImageUrls,
+            ImageUrls = string.IsNullOrEmpty(room.ImageUrls) ? [] : [room.ImageUrls],
             Floor = room.Floor,
             CreatedAt = room.CreatedAt
         };
@@ -225,7 +225,7 @@ namespace HMS.API.Services
             TotalPrice = CalculateTotalPrice(room, checkIn, checkOut),
             Nights = nights,
             Description = room.Description,
-            ImageUrls = room.ImageUrls,
+            ImageUrls = string.IsNullOrEmpty(room.ImageUrls) ? [] : [room.ImageUrls],
             Floor = room.Floor
         };
     }

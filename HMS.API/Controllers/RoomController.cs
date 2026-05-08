@@ -29,7 +29,7 @@ namespace HMS.API.Controllers
         /// </summary>
         [HttpGet("availability")]
         public async Task<IActionResult> GetAvailable(
-            [FromQuery] int hotelId,
+            [FromQuery] int? hotelId,
             [FromQuery] DateTime checkIn,
             [FromQuery] DateTime checkOut,
             [FromQuery] int? capacity,

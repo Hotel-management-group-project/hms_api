@@ -14,6 +14,6 @@ namespace HMS.API.Services
         Task<RoomDto> UpdateAsync(int id, UpdateRoomDto dto);
         Task<RoomDto> UpdateStatusAsync(int id, string status, string updatedByUserId);
         Task<IEnumerable<RoomAvailabilityDto>> GetAvailableAsync(
-            int hotelId, DateTime checkIn, DateTime checkOut, int? capacity, string? type);
+            int? hotelId, DateTime checkIn, DateTime checkOut, int? capacity, string? type);
     }
 }
