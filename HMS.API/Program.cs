@@ -94,6 +94,7 @@ builder.Services.Configure<Resend.ResendClientOptions>(o =>
 builder.Services.AddTransient<Resend.IResend, Resend.ResendClient>();
 
 // Services
+builder.Services.AddScoped<IUploadService, CloudinaryUploadService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHotelService, HotelService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
