@@ -232,6 +232,39 @@ namespace HMS.API.Services
             };
         }
 
+        // ── Summary ────────────────────────────────────────────────────────────
+
+        public async Task<SummaryReportDto> GetSummaryAsync(int? hotelId = null)
+        {
+            var bookingQuery = _db.Bookings
+                .Where(b => b.Status != BookingStatus.Cancelled);
+
+            if (hotelId.HasValue)
+                bookingQuery = bookingQuery.Where(b => b.HotelId == hotelId.Value);
+
+            var totalRevenue = await bookingQuery.SumAsync(b => (decimal?)b.TotalPrice) ?? 0m;
+            var totalBookings = await bookingQuery.CountAsync();
+            var activeGuests = await bookingQuery.CountAsync(b => b.Status == BookingStatus.CheckedIn);
+
+            var roomQuery = _db.Rooms.Where(r => r.Status != RoomStatus.OutOfService);
+            if (hotelId.HasValue)
+                roomQuery = roomQuery.Where(r => r.HotelId == hotelId.Value);
+
+            var totalRooms = await roomQuery.CountAsync();
+            var occupiedRooms = await roomQuery.CountAsync(r => r.Status == RoomStatus.Occupied);
+            var occupancyRate = totalRooms > 0
+                ? Math.Round((double)occupiedRooms / totalRooms * 100, 1)
+                : 0;
+
+            return new SummaryReportDto
+            {
+                TotalRevenue = totalRevenue,
+                TotalBookings = totalBookings,
+                OccupancyRate = occupancyRate,
+                ActiveGuests = activeGuests
+            };
+        }
+
         // ── Export ─────────────────────────────────────────────────────────────
 
         public async Task<(byte[] Data, string ContentType, string FileName)> ExportAsync(ExportRequestDto request)

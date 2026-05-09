@@ -28,7 +28,7 @@ namespace HMS.API.Services
             _logger = logger;
         }
 
-        public async Task<IEnumerable<BookingListDto>> GetAllAsync(string userId, bool isStaff)
+        public async Task<IEnumerable<BookingListDto>> GetAllAsync(string userId, bool isStaff, string? referenceNumber = null)
         {
             var query = _db.Bookings
                 .Include(b => b.Guest)
@@ -38,6 +38,9 @@ namespace HMS.API.Services
 
             if (!isStaff)
                 query = query.Where(b => b.GuestId == userId);
+
+            if (!string.IsNullOrWhiteSpace(referenceNumber))
+                query = query.Where(b => b.ReferenceNumber == referenceNumber.Trim().ToUpper());
 
             var bookings = await query.OrderByDescending(b => b.CreatedAt).ToListAsync();
             return bookings.Select(ToListDto);
@@ -377,7 +380,13 @@ namespace HMS.API.Services
                 RoomNumber = br.Room.RoomNumber,
                 RoomType = br.Room.Type.ToString(),
                 Floor = br.Room.Floor,
-                PricePerNight = IsPeakMonth(b.CheckInDate.Month) ? br.Room.PricePeak : br.Room.PriceOffPeak
+                PricePerNight = IsPeakMonth(b.CheckInDate.Month) ? br.Room.PricePeak : br.Room.PriceOffPeak,
+                Capacity = br.Room.Capacity,
+                PriceOffPeak = br.Room.PriceOffPeak,
+                PricePeak = br.Room.PricePeak,
+                Status = br.Room.Status.ToString(),
+                Description = br.Room.Description,
+                ImageUrls = string.IsNullOrEmpty(br.Room.ImageUrls) ? [] : [br.Room.ImageUrls]
             }).ToList(),
             AncillaryServices = b.BookingAncillaryServices.Select(bas => new BookingServiceDto
             {

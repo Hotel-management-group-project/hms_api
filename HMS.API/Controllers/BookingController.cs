@@ -30,9 +30,9 @@ namespace HMS.API.Controllers
         /// Guest → own bookings only. FrontDesk/Manager/Admin → all bookings.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] string? referenceNumber = null)
         {
-            var bookings = await _bookingService.GetAllAsync(GetUserId(), IsStaff());
+            var bookings = await _bookingService.GetAllAsync(GetUserId(), IsStaff(), referenceNumber);
             return Ok(bookings);
         }
 

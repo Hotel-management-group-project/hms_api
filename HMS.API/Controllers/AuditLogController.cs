@@ -76,9 +76,9 @@ namespace HMS.API.Controllers
             return Ok(new PagedResult<AuditLogDto>
             {
                 Items = items,
-                TotalCount = total,
+                Total = total,
                 Page = page,
-                PageSize = pageSize
+                Limit = pageSize
             });
         }
 

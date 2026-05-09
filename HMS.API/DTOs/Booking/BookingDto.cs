@@ -33,6 +33,12 @@ namespace HMS.API.DTOs.Booking
         public string RoomType { get; set; } = string.Empty;
         public int Floor { get; set; }
         public decimal PricePerNight { get; set; }
+        public int Capacity { get; set; }
+        public decimal PriceOffPeak { get; set; }
+        public decimal PricePeak { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public List<string> ImageUrls { get; set; } = [];
     }
 
     public class BookingServiceDto
