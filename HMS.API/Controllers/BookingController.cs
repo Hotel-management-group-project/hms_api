@@ -178,6 +178,29 @@ namespace HMS.API.Controllers
             }
         }
 
+        /// <summary>
+        /// POST /api/bookings/{id}/no-show
+        /// Staff only: marks a Confirmed booking as no-show and charges 100 % of the total booking value as a cancellation fee.
+        /// </summary>
+        [HttpPost("{id:int}/no-show")]
+        [Authorize(Roles = "FrontDesk,Manager,Admin")]
+        public async Task<IActionResult> NoShow(int id)
+        {
+            try
+            {
+                var booking = await _bookingService.MarkNoShowAsync(id, GetUserId());
+                return Ok(booking);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         // ── Private helpers ────────────────────────────────────────────────────
 
         private string GetUserId() =>

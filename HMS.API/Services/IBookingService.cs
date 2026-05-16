@@ -13,5 +13,6 @@ namespace HMS.API.Services
         Task<BookingDto> CreateAsync(string guestId, CreateBookingDto dto);
         Task<BookingDto> UpdateAsync(int id, UpdateBookingDto dto);
         Task<BookingDto> CancelAsync(int id, string userId, bool isStaff, CancelBookingDto? body);
+        Task<BookingDto> MarkNoShowAsync(int id, string actorUserId);
     }
 }

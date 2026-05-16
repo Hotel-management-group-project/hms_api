@@ -280,6 +280,61 @@ namespace HMS.API.Services
             return ToDto(booking);
         }
 
+        public async Task<BookingDto> MarkNoShowAsync(int id, string actorUserId)
+        {
+            var booking = await _db.Bookings
+                .Include(b => b.Guest)
+                .Include(b => b.Hotel)
+                .Include(b => b.BookingRooms).ThenInclude(br => br.Room)
+                .Include(b => b.BookingAncillaryServices).ThenInclude(bas => bas.AncillaryService)
+                .Include(b => b.Payment)
+                .FirstOrDefaultAsync(b => b.Id == id)
+                ?? throw new KeyNotFoundException($"Booking {id} not found.");
+
+            if (booking.Status != BookingStatus.Confirmed)
+                throw new InvalidOperationException(
+                    $"Only Confirmed bookings can be marked as no-show. Current status: {booking.Status}.");
+
+            var noShowFee = booking.TotalPrice;
+
+            booking.Status = BookingStatus.NoShow;
+            booking.CancellationFee = noShowFee;
+            booking.UpdatedAt = DateTime.UtcNow;
+
+            if (booking.Payment != null)
+            {
+                booking.Payment.Amount = noShowFee;
+                booking.Payment.Status = PaymentStatus.Completed;
+                booking.Payment.Method = "NoShowFee";
+                booking.Payment.ProcessedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                _db.Payments.Add(new Payment
+                {
+                    BookingId = booking.Id,
+                    Amount = noShowFee,
+                    Method = "NoShowFee",
+                    Status = PaymentStatus.Completed,
+                    TransactionReference = $"NOSHOW-{booking.ReferenceNumber}",
+                    ProcessedAt = DateTime.UtcNow
+                });
+            }
+
+            _db.AuditLogs.Add(new AuditLog
+            {
+                UserId = actorUserId,
+                Action = "BookingNoShow",
+                EntityType = "Booking",
+                EntityId = id.ToString(),
+                Details = $"Booking {booking.ReferenceNumber} marked as no-show. Fee charged: £{noShowFee:F2}.",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await _db.SaveChangesAsync();
+            return ToDto(booking);
+        }
+
         // ── Peak / pricing helpers ─────────────────────────────────────────────
 
         private static bool IsPeakMonth(int month) => month is 6 or 7 or 8 or 12;

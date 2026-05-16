@@ -4,7 +4,7 @@
 
 namespace HMS.API.Models
 {
-    public enum BookingStatus { Pending, Confirmed, CheckedIn, CheckedOut, Cancelled }
+    public enum BookingStatus { Pending, Confirmed, CheckedIn, CheckedOut, Cancelled, NoShow }
 
     public class Booking
     {
