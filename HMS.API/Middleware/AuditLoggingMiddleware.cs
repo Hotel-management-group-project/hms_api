@@ -1,6 +1,3 @@
-// Student ID: S2401276
-// Student Name: Mohamed Iyaadh Ahmed
-// Module: Advanced Software Development (UFCF8S-30-2)
 
 using HMS.API.Data;
 using HMS.API.Models;
