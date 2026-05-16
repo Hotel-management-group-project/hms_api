@@ -102,7 +102,7 @@ namespace HMS.API.Services
             }
 
             // ── Calculate prices ──────────────────────────────────────────────
-            var roomTotal = CalculateRoomTotal(rooms, dto.CheckInDate, dto.CheckOutDate);
+            var roomTotal = CancellationFeeCalculator.CalculateRoomTotal(rooms, dto.CheckInDate, dto.CheckOutDate);
 
             var serviceEntries = new List<BookingAncillaryService>();
             var serviceTotal = 0m;
@@ -262,7 +262,7 @@ namespace HMS.API.Services
             if (booking.Status == BookingStatus.Cancelled)
                 throw new InvalidOperationException("This booking is already cancelled.");
 
-            var cancellationFee = CalculateCancellationFee(booking);
+            var cancellationFee = CancellationFeeCalculator.CalculateCancellationFee(booking);
 
             booking.Status = BookingStatus.Cancelled;
             booking.CancellationFee = cancellationFee;
@@ -357,51 +357,6 @@ namespace HMS.API.Services
             return ToDto(booking);
         }
 
-        // ── Peak / pricing helpers ─────────────────────────────────────────────
-
-        private static bool IsPeakMonth(int month) => month is 6 or 7 or 8 or 12;
-
-        private static decimal NightlyRate(Room room, DateTime night) =>
-            IsPeakMonth(night.Month) ? room.PricePeak : room.PriceOffPeak;
-
-        private static decimal CalculateRoomTotal(IEnumerable<Room> rooms, DateTime checkIn, DateTime checkOut)
-        {
-            var total = 0m;
-            var night = checkIn.Date;
-            while (night < checkOut.Date)
-            {
-                total += rooms.Sum(r => NightlyRate(r, night));
-                night = night.AddDays(1);
-            }
-            return total;
-        }
-
-        // ── Cancellation fee ───────────────────────────────────────────────────
-
-        private static decimal CalculateCancellationFee(Booking booking)
-        {
-            var daysUntilCheckIn = (booking.CheckInDate.Date - DateTime.UtcNow.Date).TotalDays;
-
-            // No-show: check-in date has already passed
-            if (daysUntilCheckIn < 0)
-                return booking.TotalPrice;
-
-            // Free cancellation: 14+ days' notice
-            if (daysUntilCheckIn >= 14)
-                return 0m;
-
-            // First night cost across all booked rooms at check-in date's rate
-            var firstNightTotal = booking.BookingRooms
-                .Sum(br => IsPeakMonth(booking.CheckInDate.Month) ? br.Room.PricePeak : br.Room.PriceOffPeak);
-
-            // 3–14 days: 50 % of first night
-            if (daysUntilCheckIn >= 3)
-                return Math.Round(firstNightTotal * 0.5m, 2);
-
-            // < 72 hours: 100 % of first night
-            return firstNightTotal;
-        }
-
         // ── Reference number ───────────────────────────────────────────────────
 
         private async Task<string> GenerateReferenceNumberAsync()
@@ -457,7 +412,7 @@ namespace HMS.API.Services
                 RoomNumber = br.Room.RoomNumber,
                 RoomType = br.Room.Type.ToString(),
                 Floor = br.Room.Floor,
-                PricePerNight = IsPeakMonth(b.CheckInDate.Month) ? br.Room.PricePeak : br.Room.PriceOffPeak,
+                PricePerNight = CancellationFeeCalculator.IsPeakMonth(b.CheckInDate.Month) ? br.Room.PricePeak : br.Room.PriceOffPeak,
                 Capacity = br.Room.Capacity,
                 PriceOffPeak = br.Room.PriceOffPeak,
                 PricePeak = br.Room.PricePeak,
