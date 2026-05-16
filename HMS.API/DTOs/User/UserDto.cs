@@ -40,4 +40,20 @@ namespace HMS.API.DTOs.User
     {
         [Required] public bool IsActive { get; set; }
     }
+
+    public class MyProfileDto
+    {
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class UpdateMyProfileDto
+    {
+        [Required] public string FirstName { get; set; } = string.Empty;
+        [Required] public string LastName { get; set; } = string.Empty;
+        [Phone] public string? PhoneNumber { get; set; }
+    }
 }

@@ -14,7 +14,7 @@ namespace HMS.API.Controllers
 {
     [ApiController]
     [Route("api/users")]
-    [Authorize(Roles = "Manager,Admin")]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
@@ -25,6 +25,7 @@ namespace HMS.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Manager,Admin")]
         public async Task<IActionResult> GetAll()
         {
             var callerRole = User.FindFirstValue(ClaimTypes.Role)
@@ -56,6 +57,7 @@ namespace HMS.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Manager,Admin")]
         public async Task<IActionResult> GetById(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -72,6 +74,7 @@ namespace HMS.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Manager,Admin")]
         public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
         {
             var callerRole = User.FindFirstValue(ClaimTypes.Role)
@@ -106,6 +109,7 @@ namespace HMS.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Manager,Admin")]
         public async Task<IActionResult> Update(string id, [FromBody] UpdateUserDto dto)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -130,6 +134,7 @@ namespace HMS.API.Controllers
         }
 
         [HttpPatch("{id}/status")]
+        [Authorize(Roles = "Manager,Admin")]
         public async Task<IActionResult> UpdateStatus(string id, [FromBody] UpdateUserStatusDto dto)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -165,6 +170,38 @@ namespace HMS.API.Controllers
             return NoContent();
         }
 
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId is null) return Unauthorized();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return NotFound();
+
+            return Ok(ToMyProfileDto(user));
+        }
+
+        [HttpPut("me")]
+        public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateMyProfileDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId is null) return Unauthorized();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null) return NotFound();
+
+            user.FirstName = dto.FirstName;
+            user.LastName = dto.LastName;
+            user.PhoneNumber = dto.PhoneNumber;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+
+            return Ok(ToMyProfileDto(user));
+        }
+
         private static UserDto ToDto(User u) => new()
         {
             Id = u.Id,
@@ -176,6 +213,15 @@ namespace HMS.API.Controllers
             IsActive = u.IsActive,
             CreatedAt = u.CreatedAt,
             LastPasswordChange = u.LastPasswordChange
+        };
+
+        private static MyProfileDto ToMyProfileDto(User u) => new()
+        {
+            FirstName = u.FirstName,
+            LastName = u.LastName,
+            Email = u.Email ?? string.Empty,
+            PhoneNumber = u.PhoneNumber,
+            CreatedAt = u.CreatedAt
         };
     }
 }
