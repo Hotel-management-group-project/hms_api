@@ -217,6 +217,30 @@ namespace HMS.API.Services
             });
 
             await _db.SaveChangesAsync();
+
+            var roomTypes = string.Join(", ", booking.BookingRooms
+                .Select(br => br.Room.Type.ToString())
+                .Distinct());
+
+            try
+            {
+                await _emailService.SendBookingConfirmationAsync(
+                    booking.Guest.Email!,
+                    $"{booking.Guest.FirstName} {booking.Guest.LastName}",
+                    booking.ReferenceNumber,
+                    booking.Hotel?.Name ?? "Hotel",
+                    roomTypes,
+                    booking.CheckInDate,
+                    booking.CheckOutDate,
+                    booking.TotalPrice,
+                    booking.QrCodeUrl ?? string.Empty);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Booking confirmation email failed for booking {Reference}", booking.ReferenceNumber);
+            }
+
             return ToDto(booking);
         }
 
@@ -269,7 +293,8 @@ namespace HMS.API.Services
                     booking.Hotel?.Name ?? "Hotel",
                     booking.CheckInDate,
                     booking.CheckOutDate,
-                    cancellationFee);
+                    cancellationFee,
+                    booking.TotalPrice);
             }
             catch (Exception ex)
             {

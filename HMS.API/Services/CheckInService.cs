@@ -86,6 +86,13 @@ namespace HMS.API.Services
 
             var fullBooking = (await _bookingService.GetByIdAsync(bookingId, string.Empty, isStaff: true))!;
 
+            var roomNumbers = fullBooking.Rooms
+                .Select(r => $"{r.RoomType} — Room {r.RoomNumber}, Floor {r.Floor}")
+                .ToList();
+            var ancillaryLines = fullBooking.AncillaryServices
+                .Select(s => $"{s.ServiceName} ×{s.Quantity} — £{s.TotalPrice:F2}")
+                .ToList();
+
             try
             {
                 await _emailService.SendCheckInConfirmationEmailAsync(
@@ -93,7 +100,9 @@ namespace HMS.API.Services
                     $"{booking.Guest.FirstName} {booking.Guest.LastName}",
                     booking.ReferenceNumber,
                     booking.Hotel?.Name ?? "Hotel",
-                    booking.CheckOutDate);
+                    booking.CheckOutDate,
+                    roomNumbers,
+                    ancillaryLines);
             }
             catch (Exception ex)
             {
@@ -143,6 +152,12 @@ namespace HMS.API.Services
             // Load full booking for PDF + email
             var fullBooking = (await _bookingService.GetByIdAsync(bookingId, string.Empty, isStaff: true))!;
 
+            var lineItems = new List<string>();
+            foreach (var r in fullBooking.Rooms)
+                lineItems.Add($"{r.RoomType} — Room {r.RoomNumber} × {fullBooking.Nights} night(s) — £{r.PricePerNight * fullBooking.Nights:F2}");
+            foreach (var s in fullBooking.AncillaryServices)
+                lineItems.Add($"{s.ServiceName} ×{s.Quantity} — £{s.TotalPrice:F2}");
+
             // Generate invoice and send email (non-blocking — errors are logged, not thrown)
             try
             {
@@ -152,6 +167,10 @@ namespace HMS.API.Services
                     $"{booking.Guest.FirstName} {booking.Guest.LastName}",
                     booking.ReferenceNumber,
                     booking.Hotel?.Name ?? "Hotel",
+                    fullBooking.CheckInDate,
+                    fullBooking.CheckOutDate,
+                    lineItems,
+                    fullBooking.TotalPrice,
                     pdfBytes);
             }
             catch (Exception ex)

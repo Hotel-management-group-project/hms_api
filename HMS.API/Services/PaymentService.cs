@@ -86,11 +86,15 @@ namespace HMS.API.Services
             {
                 try
                 {
+                    var roomTypes = string.Join(", ", booking.BookingRooms
+                        .Select(br => br.Room.Type.ToString())
+                        .Distinct());
                     await _emailService.SendBookingConfirmationAsync(
                         booking.Guest.Email!,
                         $"{booking.Guest.FirstName} {booking.Guest.LastName}",
                         booking.ReferenceNumber,
                         booking.Hotel?.Name ?? "Hotel",
+                        roomTypes,
                         booking.CheckInDate,
                         booking.CheckOutDate,
                         booking.TotalPrice,
