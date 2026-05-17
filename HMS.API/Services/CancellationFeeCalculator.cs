@@ -24,13 +24,13 @@ public static class CancellationFeeCalculator
     // The `now` parameter allows tests to inject a fixed clock without relying on DateTime.UtcNow.
     public static decimal CalculateCancellationFee(Booking booking, DateTime? now = null)
     {
+        if (booking.Status == BookingStatus.NoShow)
+            return booking.TotalPrice;
+
         var today = (now ?? DateTime.UtcNow).Date;
         var daysUntilCheckIn = (booking.CheckInDate.Date - today).TotalDays;
 
-        if (daysUntilCheckIn < 0)
-            return booking.TotalPrice;
-
-        if (daysUntilCheckIn >= 14)
+        if (daysUntilCheckIn > 14)
             return 0m;
 
         var firstNightTotal = booking.BookingRooms
