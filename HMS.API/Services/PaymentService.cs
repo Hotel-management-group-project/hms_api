@@ -41,9 +41,7 @@ namespace HMS.API.Services
                 throw new ArgumentException(
                     $"Payment amount £{dto.Amount:F2} does not match booking total £{booking.TotalPrice:F2}.");
 
-            // ── Mock processing (95 % success) ────────────────────────────────
-            var success = Random.Shared.Next(1, 101) <= 95;
-            var transactionRef = success ? GenerateTransactionRef() : null;
+            var transactionRef = GenerateTransactionRef();
 
             // ── Persist payment record ─────────────────────────────────────────
             var payment = new Payment
@@ -51,18 +49,15 @@ namespace HMS.API.Services
                 BookingId = dto.BookingId,
                 Amount = dto.Amount,
                 Method = dto.Method,
-                Status = success ? PaymentStatus.Completed : PaymentStatus.Pending,
+                Status = PaymentStatus.Completed,
                 TransactionReference = transactionRef,
                 ProcessedAt = DateTime.UtcNow
             };
 
             _db.Payments.Add(payment);
 
-            if (success)
-            {
-                booking.Status = BookingStatus.Confirmed;
-                booking.UpdatedAt = DateTime.UtcNow;
-            }
+            booking.Status = BookingStatus.Confirmed;
+            booking.UpdatedAt = DateTime.UtcNow;
 
             _db.AuditLogs.Add(new AuditLog
             {
